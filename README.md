@@ -1,6 +1,8 @@
 # SailGame
 A sailing game
 
+Inspired by Denis DeYoung and Styx!
+
 # Folder structure
 
 - `src` - source code for your kaplay project
