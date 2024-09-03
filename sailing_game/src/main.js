@@ -20,6 +20,10 @@ const windLength = 30; // Length of each wind line
 let windAngle = 45; // Initial wind direction (Northeast)
 const windChangeInterval = 5; // Change wind direction every 5 seconds
 
+// Sail rotation limits (angles in degrees)
+const minSailAngle = -45; // Left limit
+const maxSailAngle = 45; // Right limit
+
 // Create wind lines
 const windLines = [];
 for (let i = 0; i < windCount; i++) {
@@ -39,7 +43,8 @@ const sailboat = add([
     {
         speed: 200,
         windEffect: vec2(0, 0),
-        sailAngle: -20, // Angle of the sail relative to the boat
+        sailAngle: 0, // Initial angle of the sail relative to the boat
+        reverse: false, // Whether the boat is moving in reverse direction
     },
 ]);
 
@@ -104,33 +109,42 @@ function applyWindToSailboat() {
 
     // Apply force based on how perpendicular the wind is to the sail
     const windForce = Math.cos(deg2rad(90 - angleBetween)) * 100; // Force is strongest when the sail is perpendicular to the wind
-    sailboat.windEffect = sailDirection.scale(windForce); // Apply wind force in sail direction
+    let appliedForce = sailDirection.scale(windForce); // Apply wind force in sail direction
+
+    // Reverse direction if tacking
+    if (sailboat.reverse) {
+        appliedForce = appliedForce.scale(-1); // Reverse the direction of the applied force
+    }
+
+    sailboat.windEffect = appliedForce;
     sailboat.move(sailboat.windEffect);
 }
 
 // Handle input for sail adjustment
 onKeyDown("a", () => {
-    sailboat.sailAngle -= 2; // Rotate sail counter-clockwise
+    // Rotate sail counter-clockwise, but limit to minSailAngle
+    sailboat.sailAngle = Math.max(sailboat.sailAngle - 2, minSailAngle);
     updateSail(); // Update sail position and rotation
 });
 
 onKeyDown("d", () => {
-    sailboat.sailAngle += 2; // Rotate sail clockwise
+    // Rotate sail clockwise, but limit to maxSailAngle
+    sailboat.sailAngle = Math.min(sailboat.sailAngle + 2, maxSailAngle);
     updateSail(); // Update sail position and rotation
 });
 
-// Handle input for movement
+// Handle input for tacking (reversing direction)
+onKeyDown("space", () => {
+    sailboat.reverse = !sailboat.reverse; // Toggle reverse state
+});
+
+// Handle input for left and right movement
 onKeyDown("left", () => {
     sailboat.angle -= 2;
 });
 
 onKeyDown("right", () => {
     sailboat.angle += 2;
-});
-
-onKeyDown("up", () => {
-    const rad = deg2rad(sailboat.angle);
-    sailboat.move(vec2(Math.sin(rad), -Math.cos(rad)).scale(sailboat.speed));
 });
 
 // Keep the sailboat within the bounds of the screen
