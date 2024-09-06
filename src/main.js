@@ -12,6 +12,7 @@ kaplay({
 
 // Load assets
 loadSprite("rowboat", "sprites/rowboat.png");
+loadSprite("sailboat","sprites/pixil-frame-0.png");
 
 // Constants for wind effect
 const windSpeed = 100;
@@ -36,9 +37,10 @@ for (let i = 0; i < windCount; i++) {
 
 // Create the sailboat using the rowboat sprite
 const sailboat = add([
-    sprite("rowboat"),
+    sprite("sailboat"),
     pos(width() / 2, height() /2),
     anchor("center"),
+    scale(5,5),
     rotate(0),
     {
         speed: 200,
