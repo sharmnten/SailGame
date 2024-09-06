@@ -37,12 +37,12 @@ for (let i = 0; i < windCount; i++) {
 // Create the sailboat using the rowboat sprite
 const sailboat = add([
     sprite("rowboat"),
-    pos(width() / 2, height() - 100),
+    pos(width() / 2, height() /2),
     anchor("center"),
     rotate(0),
     {
         speed: 200,
-        windEffect: vec2(0, 0),
+        windEffect: 0,
         sailAngle: 0, // Initial angle of the sail relative to the boat
         reverse: false, // Whether the boat is moving in reverse direction
     },
@@ -109,7 +109,7 @@ function applyWindToSailboat() {
 
     // Apply force based on how perpendicular the wind is to the sail
     const windForce = Math.cos(deg2rad(90 - angleBetween)) * 100; // Force is strongest when the sail is perpendicular to the wind
-    let appliedForce = sailDirection.scale(windForce); // Apply wind force in sail direction
+    let appliedForce = .1*100*Math.sqrt(windSpeed)*Math.cos(toRadians(Math.abs(sailboat.sailAngle-windAngle))); // Apply wind force in sail direction
 
     // Reverse direction if tacking
     if (sailboat.reverse) {
@@ -117,7 +117,7 @@ function applyWindToSailboat() {
     }
 
     sailboat.windEffect = appliedForce;
-    sailboat.move(sailboat.windEffect);
+    sailboat.move(sailboat.windEffect*Math.cos(toRadians(sailboat.angle-90)),sailboat.windEffect*Math.sin(toRadians(sailboat.angle-90)));
 }
 
 // Handle input for sail adjustment
@@ -156,6 +156,12 @@ sailboat.onUpdate(() => {
     if (sailboat.pos.y < 0) sailboat.pos.y = 0;
     if (sailboat.pos.y > height()) sailboat.pos.y = height();
 });
+//function to convert degrees to radians
+function toRadians(angleInDegrees){
+    return(angleInDegrees*Math.PI/180);
+ }
+
+
 
 // Function to change the wind direction periodically
 function changeWindDirection() {
