@@ -13,6 +13,7 @@ kaplay({
 // Load assets
 loadSprite("rowboat", "sprites/rowboat.png");
 loadSprite("sailboat","sprites/pixil-frame-0.png");
+loadSprite("bouy","sprites/bouy.png");
 
 // Constants for wind effect
 const windSpeed = 100;
@@ -35,12 +36,41 @@ for (let i = 0; i < windCount; i++) {
     });
 }
 
+add([
+    sprite("bouy"),
+    body({isStatic:true}),
+    pos(Math.random()*width(),Math.random()*height()),
+    scale(.05,.05)
+])
+
+
+
+add([
+    sprite("bouy"),
+    body({isStatic:true}),
+    pos(Math.random()*width(),Math.random()*height()),
+    scale(.05,.05)
+])
+
+
+add([
+    sprite("bouy"),
+    body({isStatic:true}),
+    pos(Math.random()*width(),Math.random()*height()),
+    scale(.05,.05)
+])
+
+
+
+
+
+
 // Create the sailboat using the rowboat sprite
 const sailboat = add([
     sprite("sailboat"),
     pos(width() / 2, height() /2),
     anchor("center"),
-    scale(5,5),
+    scale(6,6),
     rotate(0),
     {
         speed: 200,
@@ -148,11 +178,23 @@ onKeyDown("left", () => {
 onKeyDown("right", () => {
     sailboat.angle += 2;
 });
+//add speedometer
+onDraw(() => {
+    drawText({
+        text:Math.abs( Math.round(sailboat.windEffect)/10) +" knots",
+        pos: vec2(width()-200, height()-25),
+        anchor: "center",
+        color: rgb(255, 255, 255),
+    });
+});
+
+
+
 
 // Keep the sailboat within the bounds of the screen
 sailboat.onUpdate(() => {
     applyWindToSailboat();
-
+    
     if (sailboat.pos.x < 0) sailboat.pos.x = 0;
     if (sailboat.pos.x > width()) sailboat.pos.x = width();
     if (sailboat.pos.y < 0) sailboat.pos.y = 0;
