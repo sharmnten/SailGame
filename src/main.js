@@ -144,6 +144,7 @@ function rotateVector(vector, angle) {
 }
 
 // Apply wind effect to the sailboat based on sail position
+// Apply wind effect to the sailboat based on sail position
 function applyWindToSailboat() {
     const windDirection = rotateVector(vec2(1, 0), windAngle); // Wind direction changes
     const sailDirection = rotateVector(vec2(0, -1), sailboat.sailAngle); // Sail direction
@@ -153,7 +154,16 @@ function applyWindToSailboat() {
 
     // Apply force based on how perpendicular the wind is to the sail
     const windForce = Math.cos(deg2rad(90 - angleBetween)) * 100; // Force is strongest when the sail is perpendicular to the wind
+
+    // Calculate applied force based on sail and wind angles
     let appliedForce = 0.1 * 100 * Math.sqrt(windSpeed) * Math.cos(toRadians(Math.abs(sailboat.sailAngle - windAngle)));
+
+    // Check if the wind is pushing the boat from behind
+    const relativeWindAngle = sailboat.angle - windAngle;
+    if (relativeWindAngle > 90 || relativeWindAngle < -90) {
+        // Wind is coming from behind the boat; move backward
+        appliedForce = -appliedForce;
+    }
 
     // Reverse direction if tacking
     if (sailboat.reverse) {
@@ -168,6 +178,7 @@ function applyWindToSailboat() {
         sailboat.windEffect * Math.sin(toRadians(sailboat.angle - 90))
     );
 }
+
 
 // Handle input for sail adjustment
 onKeyDown("a", () => {
