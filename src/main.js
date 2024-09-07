@@ -71,11 +71,11 @@ add([
 // Create the sailboat using the rowboat sprite
 const sailboat = add([
     sprite("sailboat"),
-    pos(width() / 2, height() /2),
+    pos(width() / 2, height() / 2),
     anchor("center"),
     area(),
     body(),
-    scale(6,6),
+    scale(6, 6),
     health(3),
     rotate(0),
     {
@@ -86,19 +86,25 @@ const sailboat = add([
     },
 ]);
 
-// Create the sail as a separate object
+// Create the sail as a separate object, anchored to the bottom so it rotates from that point
 const sail = add([
     rect(10, 50), // Width and height of the sail
-    pos(sailboat.pos.x, sailboat.pos.y - 25), // Position the sail on top of the sailboat
-    anchor("center"),
+    pos(sailboat.pos.x, sailboat.pos.y), // Position the sail initially at the same location as the boat
+    anchor("bot"), // Anchor to the bottom of the sail so it rotates from its base
     color(255, 255, 255), // White sail
     rotate(sailboat.sailAngle),
 ]);
 
 // Update the sail position and rotation relative to the sailboat
 function updateSail() {
-    sail.pos = sailboat.pos.add(rotateVector(vec2(0, -25), sailboat.sailAngle)); // Adjust position
-    sail.angle = sailboat.sailAngle; // Adjust rotation
+    // Offset to position the sail in front of the boat
+    const sailOffset = rotateVector(vec2(0, -10), sailboat.angle); // 40 units in front of the boat
+
+    // Update sail position and rotation to always be offset from the boat's center
+    sail.pos = sailboat.pos.add(sailOffset);
+
+    // Set the sail's angle relative to the boat's angle
+    sail.angle = sailboat.angle + sailboat.sailAngle;
 }
 
 // Update wind lines
@@ -163,7 +169,6 @@ function applyWindToSailboat() {
     );
 }
 
-
 // Handle input for sail adjustment
 onKeyDown("a", () => {
     // Rotate sail counter-clockwise, but limit to minSailAngle
@@ -190,34 +195,31 @@ onKeyDown("left", () => {
 onKeyDown("right", () => {
     sailboat.angle += 2;
 });
-//add speedometer
+
+// Add speedometer
 onDraw(() => {
     drawText({
-        text:Math.abs( Math.round(sailboat.windEffect)/10) +" knots",
-        pos: vec2(width()-200, height()-25),
+        text: Math.abs(Math.round(sailboat.windEffect) / 10) + " knots",
+        pos: vec2(width() - 200, height() - 25),
         anchor: "center",
         color: rgb(255, 255, 255),
     });
 });
 
-
-
-
 // Keep the sailboat within the bounds of the screen
 sailboat.onUpdate(() => {
     applyWindToSailboat();
-    
+
     if (sailboat.pos.x < 0) sailboat.pos.x = 0;
     if (sailboat.pos.x > width()) sailboat.pos.x = width();
     if (sailboat.pos.y < 0) sailboat.pos.y = 0;
     if (sailboat.pos.y > height()) sailboat.pos.y = height();
 });
-//function to convert degrees to radians
-function toRadians(angleInDegrees){
-    return(angleInDegrees*Math.PI/180);
- }
 
-
+// Function to convert degrees to radians
+function toRadians(angleInDegrees) {
+    return (angleInDegrees * Math.PI) / 180;
+}
 
 // Function to change the wind direction periodically
 function changeWindDirection() {
