@@ -21,6 +21,10 @@ const windCount = 100; // Number of wind lines
 const windLength = 30; // Length of each wind line
 let windAngle = 45; // Initial wind direction (Northeast)
 const windChangeInterval = 5; // Change wind direction every 5 seconds
+// Minimap properties
+const minimapScale = 0.2; // Scale down the minimap to 20% of the full map size
+const minimapSize = vec2(width() * minimapScale, height() * minimapScale); // Minimap size
+
 
 // Sail rotation limits (angles in degrees)
 const minSailAngle = -45; // Left limit
@@ -135,6 +139,30 @@ function drawWindLines() {
     });
 }
 
+// Draw the minimap in the corner
+function drawMinimap() {
+    // Draw a rectangle representing the minimap background
+    drawRect({
+        fixed:true,
+        pos: vec2(10, 10), // Top-left corner of the screen
+        width: minimapSize.x,
+        height: minimapSize.y,
+        color: rgb(0, 0, 0, 0.5), // Semi-transparent background
+    });
+
+    // Draw the sailboat's position on the minimap
+    const minimapBoatPos = sailboat.pos.scale(minimapScale);
+
+    drawRect({
+        fixed:true,
+        pos: vec2(10, 10).add(minimapBoatPos), // Position in the minimap
+        width: 5, // Small rectangle to represent the boat
+        height: 5,
+        color: rgb(255, 255, 255), // White color for the boat marker
+    });
+}
+
+
 // Calculate rotated vector
 function rotateVector(vector, angle) {
     const rad = deg2rad(angle);
@@ -224,14 +252,33 @@ onDraw(() => {
     });
 });
 
-// Keep the sailboat within the bounds of the screen
-sailboat.onUpdate(() => {
-    applyWindToSailboat();
 
-    if (sailboat.pos.x < 0) sailboat.pos.x = 0;
-    if (sailboat.pos.x > width()) sailboat.pos.x = width();
-    if (sailboat.pos.y < 0) sailboat.pos.y = 0;
-    if (sailboat.pos.y > height()) sailboat.pos.y = height();
+
+// camera follows player and restricts movement within minimap bounds
+sailboat.onUpdate(() => {
+    camPos(sailboat.pos);
+
+    // Calculate the map bounds based on minimap size and scale
+    const mapBounds = {
+        left: 0,
+        right: width(),
+        top: 0,
+        bottom: height(),
+    };
+
+    // Restrict sailboat movement within the minimap bounds
+    if (sailboat.pos.x < mapBounds.left) {
+        sailboat.pos.x = mapBounds.left;
+    }
+    if (sailboat.pos.x > mapBounds.right) {
+        sailboat.pos.x = mapBounds.right;
+    }
+    if (sailboat.pos.y < mapBounds.top) {
+        sailboat.pos.y = mapBounds.top;
+    }
+    if (sailboat.pos.y > mapBounds.bottom) {
+        sailboat.pos.y = mapBounds.bottom;
+    }
 });
 
 // Function to convert degrees to radians
@@ -261,7 +308,8 @@ onUpdate(() => {
     applyWindToSailboat(); // Continuously apply wind effect to the sailboat
 });
 
-// Main draw loop
 onDraw(() => {
     drawWindLines();
+    drawMinimap(); // Draw the minimap on each frame
 });
+
