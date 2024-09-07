@@ -146,28 +146,35 @@ function rotateVector(vector, angle) {
 // Apply wind effect to the sailboat based on sail position
 // Apply wind effect to the sailboat based on sail position
 function applyWindToSailboat() {
-    const windDirection = rotateVector(vec2(1, 0), windAngle); // Wind direction changes
+    const windDirection = rotateVector(vec2(1, 0), windAngle); // Wind direction
     const sailDirection = rotateVector(vec2(0, -1), sailboat.sailAngle); // Sail direction
 
     // Calculate the angle between the wind direction and sail direction
     const angleBetween = Math.abs(windDirection.angle() - sailDirection.angle());
 
-    // Apply force based on how perpendicular the wind is to the sail
-    const windForce = Math.cos(deg2rad(90 - angleBetween)) * 100; // Force is strongest when the sail is perpendicular to the wind
+    // Force is strongest when the sail is perpendicular to the wind (90 degrees)
+    const windForce = Math.cos(deg2rad(90 - angleBetween)) * 100;
 
-    // Calculate applied force based on sail and wind angles
+    // Adjust applied force based on sail and wind angles
     let appliedForce = 0.1 * 100 * Math.sqrt(windSpeed) * Math.cos(toRadians(Math.abs(sailboat.sailAngle - windAngle)));
 
-    // Check if the wind is pushing the boat from behind
+    // Determine if the wind is pushing the boat forward or backward
     const relativeWindAngle = sailboat.angle - windAngle;
-    if (relativeWindAngle > 90 || relativeWindAngle < -90) {
-        // Wind is coming from behind the boat; move backward
-        appliedForce = -appliedForce;
+
+    if (relativeWindAngle > -90 && relativeWindAngle < 90) {
+        // Wind is mostly in front of the boat (favorable for forward movement)
+        sailboat.reverse = false;
+    } else {
+        // Wind is mostly behind the boat, might push it backward
+        appliedForce = -Math.abs(appliedForce);
+        sailboat.reverse = true;
     }
 
     // Reverse direction if tacking
     if (sailboat.reverse) {
-        appliedForce = -appliedForce; // Reverse the direction of the applied force
+        appliedForce = -Math.abs(appliedForce); // Move backward if reverse is active
+    } else {
+        appliedForce = Math.abs(appliedForce); // Move forward if reverse is inactive
     }
 
     sailboat.windEffect = appliedForce;
