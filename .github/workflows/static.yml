@@ -35,8 +35,8 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Setup Node
         uses: actions/setup-node@v4
-          with:
-            node-version: 18
+        with:
+          node-version: 18
       - name: Install packages
         run: npm i --force
       - name: Build the game
