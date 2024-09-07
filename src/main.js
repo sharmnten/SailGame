@@ -38,6 +38,7 @@ for (let i = 0; i < windCount; i++) {
 
 add([
     sprite("bouy"),
+    area(),
     body({isStatic:true}),
     pos(Math.random()*width(),Math.random()*height()),
     scale(.05,.05)
@@ -48,6 +49,7 @@ add([
 add([
     sprite("bouy"),
     body({isStatic:true}),
+    area(),
     pos(Math.random()*width(),Math.random()*height()),
     scale(.05,.05)
 ])
@@ -55,6 +57,7 @@ add([
 
 add([
     sprite("bouy"),
+    area(),
     body({isStatic:true}),
     pos(Math.random()*width(),Math.random()*height()),
     scale(.05,.05)
@@ -70,6 +73,8 @@ const sailboat = add([
     sprite("sailboat"),
     pos(width() / 2, height() /2),
     anchor("center"),
+    area(),
+    body(),
     scale(6,6),
     health(3),
     rotate(0),
