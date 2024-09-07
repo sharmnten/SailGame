@@ -1,4 +1,4 @@
-# Sailers life
+# Sailors life
 
 Paying tribute to Dennis DeYoung and Styx
 
