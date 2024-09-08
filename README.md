@@ -1,6 +1,7 @@
 # Sailors life
 
 Paying tribute to Dennis DeYoung and Styx
+Play at [this site](https://sharmnten.github.io/SailGame/)
 
 # Folder structure
 
