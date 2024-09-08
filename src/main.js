@@ -14,6 +14,7 @@ kaplay({
 loadSprite("rowboat", "sprites/rowboat.png");
 loadSprite("sailboat","sprites/pixil-frame-0.png");
 loadSprite("bouy","sprites/bouy.png");
+loadSprite("wave","sprites/wave.png");
 
 // Constants for wind effect
 const windSpeed = 100;
@@ -27,8 +28,8 @@ const minimapSize = vec2(width() * minimapScale, height() * minimapScale); // Mi
 
 
 // Sail rotation limits (angles in degrees)
-const minSailAngle = -45; // Left limit
-const maxSailAngle = 45; // Right limit
+const minSailAngle = 90; // Left limit
+const maxSailAngle = 270; // Right limit
 
 // Create wind lines
 const windLines = [];
@@ -68,6 +69,26 @@ add([
 ])
 
 
+
+
+
+
+
+
+loop(0.5, () => {
+    const wave = add([
+        sprite("wave"),
+        area(),
+        pos(Math.random()*width(),Math.random()*height()),
+        offscreen({hide: true}),
+        scale(5,5),
+    ])
+     wave.move(.5*windSpeed*Math.cos(toRadians(windAngle)),.5*windSpeed*Math.sin(toRadians(windAngle)));
+    // Execute something after 3 seconds.
+    wait(3, () => {
+        destroy(wave);
+    });
+});
 
 
 
@@ -184,10 +205,10 @@ function applyWindToSailboat() {
     const windForce = Math.cos(deg2rad(90 - angleBetween)) * 100;
 
     // Adjust applied force based on sail and wind angles
-    let appliedForce = 0.1 * 100 * Math.sqrt(windSpeed) * Math.cos(toRadians(Math.abs(sailboat.sailAngle - windAngle)));
+    let appliedForce = 0.1 * 100 * Math.sqrt(windSpeed) * Math.cos(toRadians(/*Math.abs(*/sailboat.sailAngle - windAngle/*)*/));
 
     // Determine if the wind is pushing the boat forward or backward
-    const relativeWindAngle = sailboat.angle - windAngle;
+    /*const relativeWindAngle = sailboat.angle - windAngle;
 
     if (relativeWindAngle > -90 && relativeWindAngle < 90) {
         // Wind is mostly in front of the boat (favorable for forward movement)
@@ -196,7 +217,7 @@ function applyWindToSailboat() {
         // Wind is mostly behind the boat, might push it backward
         appliedForce = -Math.abs(appliedForce);
         sailboat.reverse = true;
-    }
+    }*/
 
     // Reverse direction if tacking
     if (sailboat.reverse) {
@@ -249,6 +270,8 @@ onDraw(() => {
         pos: vec2(width() - 200, height() - 25),
         anchor: "center",
         color: rgb(255, 255, 255),
+        layer: "ui",
+        fixed: true,
     });
 });
 
