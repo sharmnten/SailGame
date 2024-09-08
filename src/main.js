@@ -23,7 +23,7 @@ const windLength = 30; // Length of each wind line
 let windAngle = 45; // Initial wind direction (Northeast)
 const windChangeInterval = 5; // Change wind direction every 5 seconds
 // Minimap properties
-const minimapScale = 0.1; // Scale down the minimap to 20% of the full map size
+const minimapScale = 0.3; // Scale down the minimap to 30% of the full map size
 const minimapSize = vec2(width() * minimapScale, height() * minimapScale); // Minimap size
 
 
