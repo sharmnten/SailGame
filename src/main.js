@@ -17,14 +17,14 @@ loadSprite("bouy","sprites/bouy.png");
 loadSprite("wave","sprites/wave.png");
 
 // Constants for wind effect
-const windSpeed = 100;
-const windCount = 100; // Number of wind lines
-const windLength = 30; // Length of each wind line
+var windSpeed = 100;
+const windCount = 200; // Number of wind lines
+const windLength = windSpeed/4; // Length of each wind line
 let windAngle = 45; // Initial wind direction (Northeast)
-const windChangeInterval = 5; // Change wind direction every 5 seconds
+const windChangeInterval = 60; // Change wind direction every 5 seconds
 // Minimap properties
-const minimapScale = 0.3; // Scale down the minimap to 30% of the full map size
-const minimapSize = vec2(width() * minimapScale, height() * minimapScale); // Minimap size
+const minimapScale = 0.2; // Scale down the minimap to 20% of the full map size
+const minimapSize = vec2(width() * minimapScale,height() * minimapScale); // Minimap size
 
 
 // Sail rotation limits (angles in degrees)
@@ -168,7 +168,10 @@ function drawMinimap() {
         pos: vec2(10, 10), // Top-left corner of the screen
         width: minimapSize.x,
         height: minimapSize.y,
-        color: rgb(0, 0, 0, 0.5), // Semi-transparent background
+        outline,
+        borderColor:rgb(255,255,255),
+        color: rgb(0, 0, 0, 0.5),
+         // Semi-transparent background
     });
 
     // Draw the sailboat's position on the minimap
@@ -179,9 +182,16 @@ function drawMinimap() {
         pos: vec2(10, 10).add(minimapBoatPos), // Position in the minimap
         width: 5, // Small rectangle to represent the boat
         height: 5,
-        color: rgb(255, 255, 255), // White color for the boat marker
+        color: rgb(255, 149, 0), // White color for the boat marker
     });
 }
+
+
+
+// Example usage:
+
+
+
 
 
 // Calculate rotated vector
@@ -199,14 +209,14 @@ function applyWindToSailboat() {
     const sailDirection = rotateVector(vec2(0, -1), sailboat.sailAngle); // Sail direction
 
     // Calculate the angle between the wind direction and sail direction
-    const angleBetween = Math.abs(windDirection.angle() - sailDirection.angle());
+    let angleBetween = .001+Math.abs(windDirection.angle() - sailboat.angle+sailboat.sailAngle);
 
     // Force is strongest when the sail is perpendicular to the wind (90 degrees)
-    const windForce = Math.cos(deg2rad(90 - angleBetween)) * 100;
+    let windForce = Math.cos(toRadians(90 - angleBetween)) * 100;
 
     // Adjust applied force based on sail and wind angles
-    let appliedForce = 0.1 * 100 * Math.sqrt(windSpeed) * Math.cos(toRadians(/*Math.abs(*/sailboat.sailAngle - windAngle/*)*/));
-
+   let appliedForce = 0.1 * 100 * Math.sqrt(Math.abs(windForce)/*swap for windSpeed to restore original*/) * Math.cos(toRadians(/*Math.abs(*/sailboat.sailAngle - windAngle/*)*/));
+    //debug.log(sailboat.angle+", "+appliedForce);
     // Determine if the wind is pushing the boat forward or backward
     /*const relativeWindAngle = sailboat.angle - windAngle;
 
@@ -266,9 +276,19 @@ onKeyDown("right", () => {
 // Add speedometer
 onDraw(() => {
     drawText({
-        text: Math.abs(Math.round(sailboat.windEffect) / 10) + " knots",
+        text: "Speed: "+Math.abs(Math.round(sailboat.windEffect) / 10) + " knots",
+        pos: vec2(width() - 200, height() - 50),
+        anchor: "center",
+        color: rgb(255, 255, 255),
+        layer: "ui",
+        size:30,
+        fixed: true,
+    });
+    drawText({
+        text:"Windspeed:"+Math.round(windSpeed)/10 + " knots",
         pos: vec2(width() - 200, height() - 25),
         anchor: "center",
+        size:30,
         color: rgb(255, 255, 255),
         layer: "ui",
         fixed: true,
@@ -302,6 +322,7 @@ sailboat.onUpdate(() => {
     if (sailboat.pos.y > mapBounds.bottom) {
         sailboat.pos.y = mapBounds.bottom;
     }
+    
 });
 
 // Function to convert degrees to radians
@@ -319,9 +340,14 @@ function changeWindDirection() {
     });
 }
 
+function changeWindSpeed(){
+    windSpeed = rand(0,200);
+}
+
 // Set interval to change the wind direction
 loop(windChangeInterval, () => {
     changeWindDirection();
+    changeWindSpeed();
 });
 
 // Main update loop
@@ -332,6 +358,7 @@ onUpdate(() => {
 });
 
 onDraw(() => {
+    drawWindLines();
     drawWindLines();
     drawMinimap(); // Draw the minimap on each frame
 });
