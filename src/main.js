@@ -1,5 +1,11 @@
 import kaplay from "kaplay";
 import "kaplay/global";
+import { createClient } from '@supabase/supabase-js'
+
+const SUPABASE_URL = 'https://ijjitnoroazbwxsqwtyf.supabase.co'
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlqaml0bm9yb2F6Ynd4c3F3dHlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU3NDM2NTMsImV4cCI6MjA0MTMxOTY1M30._CPjSuTYWh_C_NBWdoXWHi0xpdwGJGYP4Np8bHjaIVI'
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 // Initialize Kaplay
 kaplay({
@@ -12,123 +18,111 @@ kaplay({
 
 // Load assets
 loadSprite("rowboat", "sprites/rowboat.png");
-loadSprite("sailboat","sprites/pixil-frame-0.png");
-loadSprite("bouy","sprites/bouy.png");
-loadSprite("wave","sprites/wave.png");
+loadSprite("sailboat", "sprites/pixil-frame-0.png");
+loadSprite("bouy", "sprites/bouy.png");
+loadSprite("wave", "sprites/wave.png");
 
 // Constants for wind effect
-var windSpeed = 100;
-const windCount = 200; // Number of wind lines
-const windLength = windSpeed/4; // Length of each wind line
-let windAngle = 45; // Initial wind direction (Northeast)
-const windChangeInterval = 60; // Change wind direction every 5 seconds
+let windSpeed = 100;
+const windCount = 200;
+const windLength = windSpeed / 4;
+let windAngle = 45;
+const windChangeInterval = 60;
+
 // Minimap properties
-const minimapScale = 0.2; // Scale down the minimap to 20% of the full map size
-const minimapSize = vec2(width() * minimapScale,height() * minimapScale); // Minimap size
+const minimapScale = 0.2;
+const minimapSize = vec2(width() * minimapScale, height() * minimapScale);
 
-
-// Sail rotation limits (angles in degrees)
-const minSailAngle = 90; // Left limit
-const maxSailAngle = 270; // Right limit
+// Sail rotation limits
+const minSailAngle = 90;
+const maxSailAngle = 270;
 
 // Create wind lines
 const windLines = [];
 for (let i = 0; i < windCount; i++) {
     windLines.push({
         pos: vec2(rand(0, width()), rand(0, height())),
-        speed: rand(windSpeed * 0.8, windSpeed * 1.2), // Slight variation in speed
-        angle: windAngle, // Initial angle for wind
+        speed: rand(windSpeed * 0.8, windSpeed * 1.2),
+        angle: windAngle,
     });
 }
 
-add([
-    sprite("bouy"),
-    area(),
-    body({isStatic:true}),
-    pos(Math.random()*width(),Math.random()*height()),
-    scale(.05,.05)
-])
+// Add static bouys
+for (let i = 0; i < 3; i++) {
+    add([
+        sprite("bouy"),
+        area(),
+        body({ isStatic: true }),
+        pos(Math.random() * width(), Math.random() * height()),
+        scale(0.05, 0.05),
+    ]);
+}
 
-
-
-add([
-    sprite("bouy"),
-    body({isStatic:true}),
-    area(),
-    pos(Math.random()*width(),Math.random()*height()),
-    scale(.05,.05)
-])
-
-
-add([
-    sprite("bouy"),
-    area(),
-    body({isStatic:true}),
-    pos(Math.random()*width(),Math.random()*height()),
-    scale(.05,.05)
-])
-
-
-
-
-
-
-
-
+// Add waves periodically
 loop(0.5, () => {
     const wave = add([
         sprite("wave"),
         area(),
-        pos(Math.random()*width(),Math.random()*height()),
-        offscreen({hide: true}),
-        scale(5,5),
-    ])
-     wave.move(.5*windSpeed*Math.cos(toRadians(windAngle)),.5*windSpeed*Math.sin(toRadians(windAngle)));
-    // Execute something after 3 seconds.
+        pos(Math.random() * width(), Math.random() * height()),
+        offscreen({ hide: true }),
+        scale(5, 5),
+    ]);
+    wave.move(0.5 * windSpeed * Math.cos(toRadians(windAngle)), 0.5 * windSpeed * Math.sin(toRadians(windAngle)));
     wait(3, () => {
         destroy(wave);
     });
 });
 
+// Function to generate a unique ID for each player
+function generatePlayerId() {
+    return '_' + Math.random().toString(36).substr(2, 9);
+}
 
+// Player's unique ID
+const playerId = generatePlayerId();
 
+// Initialize player state
+const playerState = {
+    id: playerId,
+    pos: { x: width() / 2, y: height() / 2 },
+    angle: 0,
+    sailAngle: 0,
+};
 
-// Create the sailboat using the rowboat sprite
+// Store other players
+const otherPlayers = {};
+
+// Create the sailboat
 const sailboat = add([
     sprite("sailboat"),
-    pos(width() / 2, height() / 2),
+    pos(playerState.pos.x, playerState.pos.y),
     anchor("center"),
     area(),
     body(),
     scale(6, 6),
     health(3),
-    rotate(0),
+    rotate(playerState.angle),
     {
         speed: 200,
         windEffect: 0,
-        sailAngle: 0, // Initial angle of the sail relative to the boat
-        reverse: false, // Whether the boat is moving in reverse direction
+        sailAngle: playerState.sailAngle,
+        reverse: false,
     },
 ]);
 
-// Create the sail as a separate object, anchored to the bottom so it rotates from that point
+// Create the sail
 const sail = add([
-    rect(10, 50), // Width and height of the sail
-    pos(sailboat.pos.x, sailboat.pos.y), // Position the sail initially at the same location as the boat
-    anchor("bot"), // Anchor to the bottom of the sail so it rotates from its base
-    color(255, 255, 255), // White sail
+    rect(10, 50),
+    pos(sailboat.pos.x, sailboat.pos.y),
+    anchor("bot"),
+    color(255, 255, 255),
     rotate(sailboat.sailAngle),
 ]);
 
-// Update the sail position and rotation relative to the sailboat
+// Update the sail position and rotation
 function updateSail() {
-    // Offset to position the sail in front of the boat
-    const sailOffset = rotateVector(vec2(0, -10), sailboat.angle); // 40 units in front of the boat
-
-    // Update sail position and rotation to always be offset from the boat's center
+    const sailOffset = rotateVector(vec2(0, -10), sailboat.angle);
     sail.pos = sailboat.pos.add(sailOffset);
-
-    // Set the sail's angle relative to the boat's angle
     sail.angle = sailboat.angle + sailboat.sailAngle;
 }
 
@@ -137,8 +131,6 @@ function updateWindLines() {
     windLines.forEach(wind => {
         const direction = rotateVector(vec2(1, 0), wind.angle);
         wind.pos = wind.pos.add(direction.scale(wind.speed * dt()));
-
-        // Reset position if out of bounds
         if (wind.pos.x > width() || wind.pos.y > height()) {
             wind.pos = vec2(rand(0, width()), -windLength);
         }
@@ -150,51 +142,51 @@ function drawWindLines() {
     windLines.forEach(wind => {
         const direction = rotateVector(vec2(1, 0), wind.angle);
         const endPos = wind.pos.add(direction.scale(windLength));
-
         drawLine({
             p1: wind.pos,
             p2: endPos,
             width: 2,
-            color: rgb(255, 255, 255), // White wind lines
+            color: rgb(255, 255, 255),
         });
     });
 }
 
-// Draw the minimap in the corner
+// Draw the minimap
 function drawMinimap() {
-    // Draw a rectangle representing the minimap background
     drawRect({
-        fixed:true,
-        pos: vec2(10, 10), // Top-left corner of the screen
+        fixed: true,
+        pos: vec2(10, 10),
         width: minimapSize.x,
         height: minimapSize.y,
-        outline,
-        borderColor:rgb(255,255,255),
+        outline: { width: 1, color: rgb(255, 255, 255) },
         color: rgb(0, 0, 0, 0.5),
-         // Semi-transparent background
     });
 
-    // Draw the sailboat's position on the minimap
+    // Draw current player's boat
     const minimapBoatPos = sailboat.pos.scale(minimapScale);
-
     drawRect({
-        fixed:true,
-        pos: vec2(10, 10).add(minimapBoatPos), // Position in the minimap
-        width: 5, // Small rectangle to represent the boat
+        fixed: true,
+        pos: vec2(10, 10).add(minimapBoatPos),
+        width: 5,
         height: 5,
-        color: rgb(255, 149, 0), // White color for the boat marker
+        color: rgb(255, 149, 0),
     });
+
+    // Draw other players' boats
+    for (const id in otherPlayers) {
+        const otherPlayer = otherPlayers[id];
+        const otherBoatPos = vec2(otherPlayer.pos.x, otherPlayer.pos.y).scale(minimapScale);
+        drawRect({
+            fixed: true,
+            pos: vec2(10, 10).add(otherBoatPos),
+            width: 5,
+            height: 5,
+            color: rgb(0, 255, 0),
+        });
+    }
 }
 
-
-
-// Example usage:
-
-
-
-
-
-// Calculate rotated vector
+// Rotate vector by angle
 function rotateVector(vector, angle) {
     const rad = deg2rad(angle);
     const x = vector.x * Math.cos(rad) - vector.y * Math.sin(rad);
@@ -202,73 +194,40 @@ function rotateVector(vector, angle) {
     return vec2(x, y);
 }
 
-// Apply wind effect to the sailboat based on sail position
-// Apply wind effect to the sailboat based on sail position
+// Apply wind effect to the sailboat
 function applyWindToSailboat() {
-    const windDirection = rotateVector(vec2(1, 0), windAngle); // Wind direction
-    const sailDirection = rotateVector(vec2(0, -1), sailboat.sailAngle); // Sail direction
-
-    // Calculate the angle between the wind direction and sail direction
-    let angleBetween = .001+Math.abs(windDirection.angle() - sailboat.angle+sailboat.sailAngle);
-
-    // Force is strongest when the sail is perpendicular to the wind (90 degrees)
-    let windForce = Math.cos(toRadians(90 - angleBetween)) * 100;
-
-    // Adjust applied force based on sail and wind angles
-   let appliedForce = 0.1 * 100 * Math.sqrt(Math.abs(windForce)/*swap for windSpeed to restore original*/) * Math.cos(toRadians(/*Math.abs(*/sailboat.sailAngle - windAngle/*)*/));
-    //debug.log(sailboat.angle+", "+appliedForce);
-    // Determine if the wind is pushing the boat forward or backward
-    /*const relativeWindAngle = sailboat.angle - windAngle;
-
-    if (relativeWindAngle > -90 && relativeWindAngle < 90) {
-        // Wind is mostly in front of the boat (favorable for forward movement)
-        sailboat.reverse = false;
-    } else {
-        // Wind is mostly behind the boat, might push it backward
-        appliedForce = -Math.abs(appliedForce);
-        sailboat.reverse = true;
-    }*/
-
-    // Reverse direction if tacking
-    if (sailboat.reverse) {
-        appliedForce = -Math.abs(appliedForce); // Move backward if reverse is active
-    } else {
-        appliedForce = Math.abs(appliedForce); // Move forward if reverse is inactive
-    }
+    const windDirection = rotateVector(vec2(1, 0), windAngle);
+    const angleBetween = 0.001 + Math.abs(windDirection.angle() - sailboat.angle + sailboat.sailAngle);
+    const windForce = Math.cos(toRadians(90 - angleBetween)) * 100;
+    const appliedForce = 0.1 * 100 * Math.sqrt(Math.abs(windForce)) * Math.cos(toRadians(sailboat.sailAngle - windAngle));
 
     sailboat.windEffect = appliedForce;
 
-    // Move the boat based on the wind effect and its angle
     sailboat.move(
         sailboat.windEffect * Math.cos(toRadians(sailboat.angle - 90)),
         sailboat.windEffect * Math.sin(toRadians(sailboat.angle - 90))
     );
 }
 
-
 // Handle input for sail adjustment
 onKeyDown("a", () => {
-    // Rotate sail counter-clockwise, but limit to minSailAngle
     sailboat.sailAngle = Math.max(sailboat.sailAngle - 2, minSailAngle);
-    updateSail(); // Update sail position and rotation
+    updateSail();
 });
-
 onKeyDown("d", () => {
-    // Rotate sail clockwise, but limit to maxSailAngle
     sailboat.sailAngle = Math.min(sailboat.sailAngle + 2, maxSailAngle);
-    updateSail(); // Update sail position and rotation
+    updateSail();
 });
 
-// Handle input for tacking (reversing direction)
+// Handle input for tacking
 onKeyDown("space", () => {
-    sailboat.reverse = !sailboat.reverse; // Toggle reverse state
+    sailboat.reverse = !sailboat.reverse;
 });
 
 // Handle input for left and right movement
 onKeyDown("left", () => {
     sailboat.angle -= 2;
 });
-
 onKeyDown("right", () => {
     sailboat.angle += 2;
 });
@@ -276,32 +235,29 @@ onKeyDown("right", () => {
 // Add speedometer
 onDraw(() => {
     drawText({
-        text: "Speed: "+Math.abs(Math.round(sailboat.windEffect) / 10) + " knots",
+        text: "Speed: " + Math.abs(Math.round(sailboat.windEffect) / 10) + " knots",
         pos: vec2(width() - 200, height() - 50),
         anchor: "center",
         color: rgb(255, 255, 255),
         layer: "ui",
-        size:30,
+        size: 30,
         fixed: true,
     });
     drawText({
-        text:"Windspeed:"+Math.round(windSpeed)/10 + " knots",
+        text: "Windspeed: " + Math.round(windSpeed) / 10 + " knots",
         pos: vec2(width() - 200, height() - 25),
         anchor: "center",
-        size:30,
+        size: 30,
         color: rgb(255, 255, 255),
         layer: "ui",
         fixed: true,
     });
 });
 
-
-
-// camera follows player and restricts movement within minimap bounds
+// Camera follows player and restricts movement within minimap bounds
 sailboat.onUpdate(() => {
     camPos(sailboat.pos);
 
-    // Calculate the map bounds based on minimap size and scale
     const mapBounds = {
         left: 0,
         right: width(),
@@ -310,38 +266,24 @@ sailboat.onUpdate(() => {
     };
 
     // Restrict sailboat movement within the minimap bounds
-    if (sailboat.pos.x < mapBounds.left) {
-        sailboat.pos.x = mapBounds.left;
-    }
-    if (sailboat.pos.x > mapBounds.right) {
-        sailboat.pos.x = mapBounds.right;
-    }
-    if (sailboat.pos.y < mapBounds.top) {
-        sailboat.pos.y = mapBounds.top;
-    }
-    if (sailboat.pos.y > mapBounds.bottom) {
-        sailboat.pos.y = mapBounds.bottom;
-    }
-    
+    sailboat.pos.x = clamp(sailboat.pos.x, mapBounds.left, mapBounds.right);
+    sailboat.pos.y = clamp(sailboat.pos.y, mapBounds.top, mapBounds.bottom);
 });
 
-// Function to convert degrees to radians
+// Convert degrees to radians
 function toRadians(angleInDegrees) {
     return (angleInDegrees * Math.PI) / 180;
 }
 
-// Function to change the wind direction periodically
+// Change wind direction periodically
 function changeWindDirection() {
-    windAngle = rand(-90, 90); // Randomly change wind direction between -90 and 90 degrees
-
-    // Update the wind lines to match the new wind direction
+    windAngle = rand(-90, 90);
     windLines.forEach(wind => {
         wind.angle = windAngle;
     });
 }
-
-function changeWindSpeed(){
-    windSpeed = rand(0,200);
+function changeWindSpeed() {
+    windSpeed = rand(0, 200);
 }
 
 // Set interval to change the wind direction
@@ -353,13 +295,135 @@ loop(windChangeInterval, () => {
 // Main update loop
 onUpdate(() => {
     updateWindLines();
-    updateSail(); // Continuously update the sail position and rotation
-    applyWindToSailboat(); // Continuously apply wind effect to the sailboat
+    updateSail();
+    applyWindToSailboat();
+    updatePlayerState();
+    updateOtherPlayers(); // Update other players' boats and sails
 });
 
+// Draw functions
 onDraw(() => {
     drawWindLines();
-    drawWindLines();
-    drawMinimap(); // Draw the minimap on each frame
+    drawMinimap();
 });
 
+// Multiplayer integration with Supabase
+
+// Subscribe to the real-time channel
+const channel = supabase.channel('sailboat-game', {
+    config: {
+        broadcast: { self: true },
+        presence: { key: playerId },
+    },
+});
+
+// Track presence (connected players)
+channel.on('presence', { event: 'sync' }, () => {
+    const state = channel.presenceState();
+    for (const id in state) {
+        if (id !== playerId) {
+            if (!otherPlayers[id]) {
+                // Add new player
+                otherPlayers[id] = {
+                    id,
+                    pos: { x: width() / 2, y: height() / 2 },
+                    angle: 0,
+                    sailAngle: 0,
+                    boat: add([
+                        sprite("sailboat"),
+                        pos(width() / 2, height() / 2),
+                        anchor("center"),
+                        area(),
+                        scale(6, 6),
+                        rotate(0),
+                    ]),
+                    sail: add([
+                        rect(10, 50),
+                        pos(width() / 2, height() / 2),
+                        anchor("bot"),
+                        color(255, 255, 255),
+                        rotate(0),
+                    ]),
+                };
+            }
+        }
+    }
+});
+
+// Handle when a player leaves
+channel.on('presence', { event: 'leave' }, ({ key }) => {
+    if (otherPlayers[key]) {
+        destroy(otherPlayers[key].boat);
+        destroy(otherPlayers[key].sail);
+        delete otherPlayers[key];
+    }
+});
+
+// Receive broadcasts from other players
+channel.on('broadcast', { event: 'player-update' }, ({ payload }) => {
+    const { id, pos, angle, sailAngle } = payload;
+    if (id !== playerId) {
+        if (!otherPlayers[id]) {
+            // Add new player if not already present
+            otherPlayers[id] = {
+                id,
+                pos,
+                angle,
+                sailAngle,
+                boat: add([
+                    sprite("sailboat"),
+                    pos(pos.x, pos.y),
+                    anchor("center"),
+                    area(),
+                    scale(6, 6),
+                    rotate(angle),
+                ]),
+                sail: add([
+                    rect(10, 50),
+                    pos(pos.x, pos.y),
+                    anchor("bot"),
+                    color(255, 255, 255),
+                    rotate(angle + sailAngle),
+                ]),
+            };
+        } else {
+            otherPlayers[id].pos = pos;
+            otherPlayers[id].angle = angle;
+            otherPlayers[id].sailAngle = sailAngle;
+        }
+    }
+});
+
+// Update other players' boats and sails
+function updateOtherPlayers() {
+    for (const id in otherPlayers) {
+        const player = otherPlayers[id];
+        player.boat.pos = vec2(player.pos.x, player.pos.y);
+        player.boat.angle = player.angle;
+
+        // Update sail position and rotation
+        const sailOffset = rotateVector(vec2(0, -10), player.angle);
+        player.sail.pos = player.boat.pos.add(sailOffset);
+        player.sail.angle = player.angle + player.sailAngle;
+    }
+}
+
+// Update current player's state and broadcast it
+function updatePlayerState() {
+    playerState.pos = { x: sailboat.pos.x, y: sailboat.pos.y };
+    playerState.angle = sailboat.angle;
+    playerState.sailAngle = sailboat.sailAngle;
+
+    channel.send({
+        type: 'broadcast',
+        event: 'player-update',
+        payload: playerState,
+    });
+}
+
+// Subscribe and track presence
+channel.subscribe(async status => {
+    if (status === 'SUBSCRIBED') {
+        await channel.track(playerState);
+    }
+});

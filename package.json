@@ -6,6 +6,7 @@
 		"bundle": "npm run build && mkdir -p dist && zip -r dist/game.zip www -x \"**/.DS_Store\""
 	},
 	"dependencies": {
+		"@supabase/supabase-js": "^2.45.4",
 		"kaplay": "^3001.0.0-alpha.24"
 	},
 	"devDependencies": {
