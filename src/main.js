@@ -297,9 +297,13 @@ onUpdate(() => {
     updateWindLines();
     updateSail();
     applyWindToSailboat();
-    updatePlayerState();
-    updateOtherPlayers(); // Update other players' boats and sails
 });
+
+// Call updateOtherPlayers every 1 second (1000 milliseconds)
+const updateInterval = setInterval(() => {
+    updateOtherPlayers();
+    updatePlayerState();
+}, 1000);
 
 // Draw functions
 onDraw(() => {
